@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เว็บแจกรหัส ROV</title>
+<style>
+body { font-family:"Kanit",sans-serif; background:linear-gradient(135deg,#6a11cb,#2575fc); display:flex; justify-content:center; align-items:center; height:100vh; margin:0; color:#fff;}
+.container { background: rgba(0,0,0,0.6); padding:30px; border-radius:20px; box-shadow:0 0 20px rgba(0,0,0,0.5); text-align:center; width:380px; }
+h1{margin-bottom:20px;}
+button{background:linear-gradient(to right,#ff512f,#dd2476); border:none; padding:12px 20px; color:white; font-size:16px; cursor:pointer; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:10px; transition:0.3s;}
+button:hover{opacity:0.9;}
+input{width:90%; padding:10px; margin:10px 0; border-radius:10px; border:none;}
+.code-box{margin-top:20px; padding:15px; background: rgba(255,255,255,0.1); border-radius:10px; min-height:50px; display:flex; flex-direction:column; justify-content:center;}
+.admin-section{background: rgba(255,255,255,0.1); padding:15px; border-radius:10px; margin-top:20px; display:none; position:relative;}
+.status{margin-top:10px; font-weight:bold;}
+img{width:30px;height:30px;border-radius:5px;}
+.admin-header{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px;}
+.admin-header img{width:40px; height:40px;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>เว็บแจกรหัส ROV</h1>
+<button id="showCodeBtn"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png"> กดเพื่อดูรหัส</button>
+<div class="code-box" id="codeBox">กำลังโหลด...</div>
+<button onclick="loginAdmin()">เข้าสู่ระบบหลังบ้าน</button>
+
+<div class="admin-section" id="adminSection">
+<div class="admin-header">
+<img src="https://cdn-icons-png.flaticon.com/512/1250/1250688.png">
+<h3>หลังบ้าน (Admin)</h3>
+</div>
+<input type="text" id="adminName" placeholder="ชื่อ">
+<input type="text" id="adminCode" placeholder="รหัส">
+<button onclick="setCode()"><img src="https://cdn-icons-png.flaticon.com/512/190/190411.png"> บันทึกชื่อและรหัส</button>
+<button onclick="toggleSystem()"><img src="https://cdn-icons-png.flaticon.com/512/565/565547.png"> เปิด/ปิดระบบ</button>
+<div class="status" id="systemStatus">กำลังโหลด...</div>
+</div>
+</div>
+
+<script>
+const API_URL = window.location.origin;
+let codeName="", codeValue="", systemOpen=false;
+const codeBox=document.getElementById("codeBox");
+const systemStatus=document.getElementById("systemStatus");
+const adminSection=document.getElementById("adminSection");
+
+async function loadData(){
+    const res=await fetch(API_URL+"/api/data");
+    const data=await res.json();
+    codeName=data.codeName; codeValue=data.codeValue; systemOpen=data.systemOpen;
+    systemStatus.innerText=systemOpen?"ระบบเปิดอยู่":"ระบบปิดอยู่";
+    showCode();
+}
+loadData();
+
+function showCode(){
+    if(systemOpen && codeName && codeValue){
+        codeBox.innerHTML=`ชื่อ: ${codeName}<br>รหัส: ${codeValue}`;
+    } else codeBox.innerHTML="ระบบยังไม่เปิด";
+}
+
+async function setCode(){
+    const name=document.getElementById("adminName").value;
+    const code=document.getElementById("adminCode").value;
+    const pass=prompt("กรุณาใส่รหัสผ่าน Admin:");
+    const res=await fetch(API_URL+"/api/update",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({codeName:name, codeValue:code, password:pass})
+    });
+    const result=await res.json();
+    alert(result.message);
+    loadData();
+}
+
+async function toggleSystem(){
+    const pass=prompt("กรุณาใส่รหัสผ่าน Admin:");
+    const res=await fetch(API_URL+"/api/update",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({systemOpen:!systemOpen,password:pass})
+    });
+    const result=await res.json();
+    alert(result.message);
+    loadData();
+}
+
+function loginAdmin(){
+    const pass=prompt("กรุณาใส่รหัสผ่าน Admin:");
+    if(pass==="123456"){
+        adminSection.style.display="block";
+    } else alert("รหัสผ่านไม่ถูกต้อง");
+}
+
+document.getElementById("showCodeBtn").addEventListener("click",showCode);
+</script>
+</body>
+</html>
